@@ -1,4 +1,3 @@
-Here's a README.md for your **Constitution Chatbot** project:
 
 ---
 
@@ -81,10 +80,3 @@ This is a Streamlit-based chatbot that allows users to interact with PDF documen
 - `requirements.txt`: List of dependencies.
 - `.env`: Environment variables for API keys.
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
----
-
-This README should help users understand the purpose of the project and how to set it up and run it. Let me know if there’s anything more you'd like to add!
