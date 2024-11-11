@@ -5,7 +5,8 @@ llama-index-llms-gemini
 python-dotenv
 nltk
 scipy
-streamlit-webrtc av
+streamlit-webrtc 
+av
 numpy
 openai-whisper
 gTTs
