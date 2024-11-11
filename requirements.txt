@@ -4,8 +4,8 @@ llama-index-embeddings-gemini
 llama-index-llms-gemini
 python-dotenv
 nltk
-pyaudio
-pyttsx3
+scipy
+streamlit-webrtc av
 numpy
 openai-whisper
 gTTs
