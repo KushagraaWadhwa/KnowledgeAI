@@ -5,6 +5,9 @@
 
 This is a Streamlit-based chatbot that allows users to interact with PDF documents through text and voice inputs. Using **Natural Language Processing (NLP)**, **Whisper** for Speech-to-Text (STT), **gTTS** for Text-to-Speech (TTS), and **Gemini** embeddings, this chatbot can process user queries and respond with information extracted from the loaded PDFs.
 
+View the app here
+https://indconstitutionchatbot.streamlit.app/
+
 ## Features
 
 - **Voice and Text Input**: Users can type queries or ask questions verbally.
