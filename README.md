@@ -1,82 +1,90 @@
-# Ask your PDF
+Here's a README.md for your **Constitution Chatbot** project:
 
-This application is a chatbot framework that enables users to interact with a specified document or set of documents through both text and voice inputs. It leverages semantic embeddings and large language models (LLM) to provide contextually accurate answers, Whisper for speech-to-text (STT) conversion, and pyttsx3 for text-to-speech (TTS) output. Built with Streamlit, this chatbot allows users to ask questions and receive informative responses from any uploaded document.
+---
+
+# Constitution Chatbot
+
+This is a Streamlit-based chatbot that allows users to interact with PDF documents through text and voice inputs. Using **Natural Language Processing (NLP)**, **Whisper** for Speech-to-Text (STT), **gTTS** for Text-to-Speech (TTS), and **Gemini** embeddings, this chatbot can process user queries and respond with information extracted from the loaded PDFs.
 
 ## Features
 
-- **Text and Voice Query**: Allows users to query documents via text or voice input.
-- **Voice Response**: Reads out responses for a fully voice-based interaction experience.
-- **Semantic Understanding**: Utilizes embeddings for accurate, context-sensitive answers.
-- **Speech Recognition**: Converts spoken queries into text using Whisper’s STT model.
-- **Response Synthesis**: Combines vector-based and keyword-based retrieval methods for optimized answers.
+- **Voice and Text Input**: Users can type queries or ask questions verbally.
+- **Speech Recognition**: Utilizes Whisper to transcribe voice inputs into text.
+- **Custom Document Indexing**: Processes and indexes PDF text for efficient querying.
+- **Hybrid Retrieval System**: Combines keyword and vector-based search to retrieve relevant information.
+- **Text-to-Speech Responses**: Responds to queries with audio using gTTS.
 
 ## Requirements
 
-- Python 3.8+
-- Required Python packages:
-  - `streamlit`
-  - `llama_index`
-  - `nltk`
-  - `pyaudio`
-  - `whisper`
-  - `gtts`
-  - `numpy`
-  - `dotenv`
+- **Python 3.8+**
+- **Streamlit**
+- **Streamlit WebRTC**
+- **Whisper** (for speech recognition)
+- **Gemini API** (for embeddings and LLM)
+- **nltk**
+- **gTTS**
+- **scipy**
+- **dotenv** (for environment variables)
 
-To install dependencies, use:
-```bash
-pip install -r requirements.txt
-```
+## Installation
 
-## Setup
-
-1. Clone the repository:
+1. Clone the repository.
     ```bash
-    git clone <repo-url>
-    cd <repo-directory>
+    git clone https://github.com/your-repo/constitution-chatbot.git
+    cd constitution-chatbot
     ```
 
-2. Add your API key (if needed) in a `.env` file:
+2. Install dependencies.
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. Download NLTK stopwords.
+    ```python
+    import nltk
+    nltk.download('stopwords')
+    ```
+
+4. Set up your `.env` file to include your Gemini API key:
     ```plaintext
-    GEMINI_API_KEY=your_api_key
+    GEMINI_API_KEY=your_gemini_api_key
     ```
-
-4. Prepare audio hardware for voice input.
 
 ## Usage
 
-1. **Run the Application**:
-   ```bash
-   python -m streamlit run chatbot.py
-   ```
+1. Start the Streamlit app.
+    ```bash
+    streamlit run app.py
+    ```
 
-2. **Using the Interface**:
-   - Upload document(s) to be queried (default directory: `data/`).
-   - Select text or voice as the input method.
-   - For text input, type your question.
-   - For voice input, click "Record Question," speak your question, and wait for the transcription.
+2. Open the app in your browser at `http://localhost:8501`.
 
-3. **Query Results**:
-   - Responses are displayed on the screen.
-   - For voice input, responses are also read aloud.
+3. Load your PDF documents into the `data` directory.
+
+4. Select an input method (Text or Voice) to ask questions about the content of your PDF.
+
+5. If using **Voice** input, click **Record Question** to begin recording. Click **Stop Recording** to submit your question.
+
+6. The chatbot will respond with an answer based on the content of your PDF. Voice responses will be played automatically.
+
+## How It Works
+
+1. **Document Loaded**: The knowledge base has been preloaded in the app.
+2. **Embedding & Retrieval**: Uses Gemini embeddings to create vector and keyword indexes.
+3. **Custom Query Engine**: Combines vector and keyword retrieval to handle user queries.
+4. **Audio Processing**: Records, transcribes, and responds to audio inputs.
 
 ## File Structure
 
-- **`chatbot.py`**: Main application file, initializes components, handles both text and voice queries.
-- **`data/`**: Directory for storing documents to be queried.
-- **`.env`**: Stores sensitive data, such as API keys.
+- `app.py`: Main Streamlit app code.
+- `data/`: Directory to store PDF documents.
+- `requirements.txt`: List of dependencies.
+- `.env`: Environment variables for API keys.
 
-## Code Overview
+## License
 
-- **Query Engine**: Uses embeddings for LLM and vector similarity, with `VectorStoreIndex` and `SimpleKeywordTableIndex` for document retrieval.
-- **Custom Retriever**: Combines vector-based and keyword-based retrieval methods for comprehensive results.
-- **Voice Interface**:
-  - Whisper is used for audio transcription.
-  - `gtts` provides TTS capabilities to read responses aloud.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-## Future Enhancements
+---
 
-- **Multilingual Support**: Integrate support for multilingual transcription and response translation.
-- **Advanced Document Preprocessing**: Enable document pre-filtering and enrichment for more specialized document sets.
-- **Add Image/Video Explaining Functionality**: Enabling asking questions from a user uploaded image or video.
-
+This README should help users understand the purpose of the project and how to set it up and run it. Let me know if there’s anything more you'd like to add!
