@@ -1,0 +1,14 @@
+(Phase 1)
+Build the chatbot doamin specific
+
+(Phase 2)
+Add guardrails research about it
+
+
+(Phase 3)
+voice questions to answer in voice 
+(Questions are speech to text and answers as text to speech)
+
+
+(Phase 4)
+Multillingual phase of the chatbot
