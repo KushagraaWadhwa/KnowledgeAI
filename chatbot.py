@@ -1,5 +1,6 @@
 import streamlit as st
 from scipy.io.wavfile import write
+from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 from llama_index.core import SimpleDirectoryReader, Settings, StorageContext
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.llms.gemini import Gemini
