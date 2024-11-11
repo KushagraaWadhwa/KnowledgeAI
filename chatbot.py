@@ -1,4 +1,5 @@
 import streamlit as st
+from scipy.io.wavfile import write
 from llama_index.core import SimpleDirectoryReader, Settings, StorageContext
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.llms.gemini import Gemini
@@ -11,9 +12,7 @@ from dotenv import load_dotenv
 import re
 import nltk
 from nltk.corpus import stopwords
-import pyaudio
 import whisper
-import pyttsx3
 import numpy as np
 import tempfile
 from gtts import gTTS
@@ -23,7 +22,6 @@ load_dotenv()
 
 # Initialize the Whisper model for STT and TTS engine
 whisper_model = whisper.load_model("base")
-engine = pyttsx3.init()
 
 st.title("Your Personal PDF Chatbot")
 st.write("Ask me questions about your PDF!")
@@ -102,25 +100,46 @@ def initialize_query_engine():
 
     return RetrieverQueryEngine(retriever=custom_retriever, response_synthesizer=response_synthesizer)
 
-# Transcribe audio using Whisper
+class AudioProcessor(AudioProcessorBase):
+    def __init__(self):
+        self.frames = []
+
+    def recv(self, frame):
+        self.frames.append(frame.to_ndarray().flatten())
+        return frame
+
+# Transcription function
 def transcribe_audio():
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
-    st.write("Listening for your question...")
+    # Start the webrtc audio processor
+    webrtc_ctx = webrtc_streamer(
+        key="example",
+        mode=WebRtcMode.SENDRECV,
+        audio_processor_factory=AudioProcessor,
+        media_stream_constraints={"audio": True, "video": False},
+        async_processing=True,
+    )
 
-    frames = []
-    for _ in range(0, int(16000 / 1024 * 5)):
-        data = stream.read(1024)
-        frames.append(data)
+    # Wait for the audio to stop being streamed, then process it
+    if webrtc_ctx.state.playing and webrtc_ctx.audio_processor:
+        st.write("Recording your question...")
 
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
+        # Wait until the user presses the "Stop Recording" button
+        if st.button("Stop Recording"):
+            frames = np.concatenate(webrtc_ctx.audio_processor.frames)
+            webrtc_ctx.audio_processor.frames = []  # Clear frames after processing
 
-    audio_data = b"".join(frames)
-    audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
-    transcription = whisper_model.transcribe(audio_np)
-    return transcription["text"]
+            # Convert frames to int16 for WAV format and save it
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
+                # Scale the audio frames to int16 format
+                audio_data = (frames * 32767).astype(np.int16)
+                write(temp_wav.name, 16000, audio_data)  # 16000 is the sample rate
+
+            # Transcribe the audio using Whisper
+            transcription = whisper_model.transcribe(temp_wav.name)
+            st.write(f"Transcribed Text: {transcription['text']}")
+            return transcription["text"]
+
+    return None
 
 # Text-to-speech output using gTTS
 @st.cache_resource
