@@ -63,9 +63,9 @@ This is a Streamlit-based chatbot that allows users to interact with PDF documen
 
 4. Select an input method (Text or Voice) to ask questions about the content of your PDF.
 
-5. If using **Voice** input, click **Record Question** to begin recording. Click **Stop Recording** to submit your question.
+5. If using **Voice** input, click **Record Question** to begin recording. Your question will be submitted automatically after it has been recorded.
 
-6. The chatbot will respond with an answer based on the content of your PDF. Voice responses will be played automatically.
+6. The chatbot will respond with an answer based on the content of your PDF. Voice responses can be played.
 
 ## How It Works
 
