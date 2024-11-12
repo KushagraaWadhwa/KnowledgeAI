@@ -24,8 +24,8 @@ load_dotenv()
 # Initialize the Whisper model for STT and TTS engine
 whisper_model = whisper.load_model("base")
 
-st.title("Your Personal PDF Chatbot")
-st.write("Ask me questions about your PDF!")
+st.title("The Indian Constitution Chatbot")
+st.write("Ask me questions about the Indian Constitution")
 
 # Preprocess text for indexing
 def preprocess_text(text):
@@ -111,36 +111,18 @@ class AudioProcessor(AudioProcessorBase):
 
 # Transcription function
 def transcribe_audio():
-    # Start the webrtc audio processor
-    webrtc_ctx = webrtc_streamer(
-        key="example",
-        mode=WebRtcMode.SENDRECV,
-        audio_processor_factory=AudioProcessor,
-        media_stream_constraints={"audio": True, "video": False},
-        async_processing=True,
-    )
+    frames = np.concatenate(st.session_state['audio_processor'].frames)
+    st.session_state['audio_processor'].frames = []  # Clear frames after processing
 
-    # Wait for the audio to stop being streamed, then process it
-    if webrtc_ctx.state.playing and webrtc_ctx.audio_processor:
-        st.write("Recording your question...")
+    # Convert frames to int16 for WAV format and save it
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
+        # Scale the audio frames to int16 format
+        audio_data = (frames * 32767).astype(np.int16)
+        write(temp_wav.name, 16000, audio_data)  # 16000 is the sample rate
 
-        # Wait until the user presses the "Stop Recording" button
-        if st.button("Stop Recording"):
-            frames = np.concatenate(webrtc_ctx.audio_processor.frames)
-            webrtc_ctx.audio_processor.frames = []  # Clear frames after processing
-
-            # Convert frames to int16 for WAV format and save it
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
-                # Scale the audio frames to int16 format
-                audio_data = (frames * 32767).astype(np.int16)
-                write(temp_wav.name, 16000, audio_data)  # 16000 is the sample rate
-
-            # Transcribe the audio using Whisper
-            transcription = whisper_model.transcribe(temp_wav.name)
-            st.write(f"Transcribed Text: {transcription['text']}")
-            return transcription["text"]
-
-    return None
+    # Transcribe the audio using Whisper
+    transcription = whisper_model.transcribe(temp_wav.name)
+    return transcription["text"]
 
 # Text-to-speech output using gTTS
 @st.cache_resource
@@ -171,10 +153,22 @@ query = None
 if input_method == "Text":
     query = st.text_input("Enter your question:")
 elif input_method == "Voice":
-    if st.button("Record Question"):
-        with st.spinner("Recording..."):
+    if st.button("Start Recording"):
+        webrtc_ctx = webrtc_streamer(
+            key="example",
+            mode=WebRtcMode.SENDRECV,
+            audio_processor_factory=AudioProcessor,
+            media_stream_constraints={"audio": True, "video": False},
+            async_processing=True,
+        )
+        st.session_state['webrtc_ctx'] = webrtc_ctx
+        st.session_state['audio_processor'] = webrtc_ctx.audio_processor
+
+    if 'webrtc_ctx' in st.session_state and st.session_state['webrtc_ctx'].state.playing:
+        st.write("Recording your question...")
+        if st.button("Stop Recording"):
             query = transcribe_audio()
-        st.write(f"Transcribed Text: {query}")
+            st.write(f"Transcribed Text: {query}")
 
 # Query the chatbot if a query is provided
 if query:
