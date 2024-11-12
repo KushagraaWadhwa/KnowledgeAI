@@ -104,38 +104,62 @@ def initialize_query_engine():
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
         self.frames = []
+        self.recording = False  # Flag to track recording state
+
+    def start_recording(self):
+        self.frames = []
+        self.recording = True
+
+    def stop_recording(self):
+        self.recording = False
 
     def recv(self, frame):
-        self.frames.append(frame.to_ndarray().flatten())
+        if self.recording:
+            self.frames.append(frame.to_ndarray().flatten())
         return frame
 
 # Transcription function
-def transcribe_audio():
-    frames = np.concatenate(st.session_state['audio_processor'].frames)
-    st.session_state['audio_processor'].frames = []  # Clear frames after processing
-
-    # Convert frames to int16 for WAV format and save it
+def transcribe_audio(frames):
+    # Convert frames to int16 format for WAV and save it
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
-        # Scale the audio frames to int16 format
-        audio_data = (frames * 32767).astype(np.int16)
-        write(temp_wav.name, 16000, audio_data)  # 16000 is the sample rate
+        audio_data = (np.concatenate(frames) * 32767).astype(np.int16)
+        write(temp_wav.name, 16000, audio_data)  # 16000 Hz sample rate
 
     # Transcribe the audio using Whisper
     transcription = whisper_model.transcribe(temp_wav.name)
     return transcription["text"]
 
-# Text-to-speech output using gTTS
-@st.cache_resource
-def text_to_speech(text):
-    try:
-        tts = gTTS(text=text, lang='en')
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            temp_file = fp.name
-            tts.save(temp_file)
-        return temp_file
-    except Exception as e:
-        st.error(f"Error in TTS: {e}")
-        return None
+# Initialize audio processor and streaming context
+if 'webrtc_ctx' not in st.session_state:
+    st.session_state['webrtc_ctx'] = None
+if 'audio_processor' not in st.session_state:
+    st.session_state['audio_processor'] = AudioProcessor()
+
+# Start and stop buttons
+if st.button("Start Recording"):
+    if st.session_state['webrtc_ctx'] is None:
+        st.session_state['webrtc_ctx'] = webrtc_streamer(
+            key="example",
+            mode=WebRtcMode.SENDRECV,
+            audio_processor_factory=lambda: st.session_state['audio_processor'],
+            media_stream_constraints={"audio": True, "video": False},
+            async_processing=True,
+        )
+    st.session_state['audio_processor'].start_recording()
+    st.write("Recording started...")
+
+if st.button("Stop Recording"):
+    st.session_state['audio_processor'].stop_recording()
+    st.write("Recording stopped.")
+
+    # Process and transcribe audio
+    if st.session_state['audio_processor'].frames:
+        frames = st.session_state['audio_processor'].frames
+        transcription = transcribe_audio(frames)
+        st.write(f"Transcribed Text: {transcription}")
+        st.session_state['audio_processor'].frames = []  # Clear frames after transcription
+    else:
+        st.write("No audio frames captured.")
 
 # Load data and initialize query engine
 if 'custom_query_engine' not in st.session_state:
@@ -152,23 +176,8 @@ input_method = st.radio("Select input method:", ("Text", "Voice"), key="input_me
 query = None
 if input_method == "Text":
     query = st.text_input("Enter your question:")
-elif input_method == "Voice":
-    if st.button("Start Recording"):
-        webrtc_ctx = webrtc_streamer(
-            key="example",
-            mode=WebRtcMode.SENDRECV,
-            audio_processor_factory=AudioProcessor,
-            media_stream_constraints={"audio": True, "video": False},
-            async_processing=True,
-        )
-        st.session_state['webrtc_ctx'] = webrtc_ctx
-        st.session_state['audio_processor'] = webrtc_ctx.audio_processor
-
-    if 'webrtc_ctx' in st.session_state and st.session_state['webrtc_ctx'].state.playing:
-        st.write("Recording your question...")
-        if st.button("Stop Recording"):
-            query = transcribe_audio()
-            st.write(f"Transcribed Text: {query}")
+elif input_method == "Voice" and 'transcribed_text' in st.session_state:
+    query = st.session_state['transcribed_text']
 
 # Query the chatbot if a query is provided
 if query:
