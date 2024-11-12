@@ -5,8 +5,6 @@ llama-index-llms-gemini
 python-dotenv
 nltk
 scipy
-sounddevice
 numpy
 openai-whisper
 gTTs
-PortAudio
