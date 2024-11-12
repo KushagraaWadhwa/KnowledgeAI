@@ -9,3 +9,4 @@ sounddevice
 numpy
 openai-whisper
 gTTs
+PortAudio
