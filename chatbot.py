@@ -1,9 +1,4 @@
 import streamlit as st
-import sounddevice as sd
-import whisper
-import numpy as np
-import tempfile
-from scipy.io.wavfile import write
 from gtts import gTTS
 import os
 from llama_index.core import SimpleDirectoryReader, Settings, StorageContext
@@ -20,9 +15,6 @@ from nltk.corpus import stopwords
 
 nltk.download('stopwords')
 load_dotenv()
-
-# Initialize Whisper model for STT
-whisper_model = whisper.load_model("base")
 
 st.title("The Indian Constitution Chatbot")
 st.write("Ask me questions about the Indian Constitution")
@@ -107,71 +99,21 @@ if 'custom_query_engine' not in st.session_state:
         st.session_state['custom_query_engine'] = initialize_query_engine()
     st.success("Ready! You can now ask questions.")
 
-# Audio recording settings
-if "recording" not in st.session_state:
-    st.session_state["recording"] = False
-if "frames" not in st.session_state:
-    st.session_state["frames"] = []
+# Input for user query
+query = st.text_input("Enter your question here:")
 
-# Audio recording callback function
-def audio_callback(indata, frames, time, status):
-    st.session_state["frames"].append(indata.copy())
+# Process the query if provided
+if query:
+    with st.spinner("Searching for an answer..."):
+        custom_query_engine = st.session_state['custom_query_engine']
+        result = custom_query_engine.query(query)
+        response = result.response
+        st.write("Response:")
+        st.write(response)
 
-# Start recording
-def start_recording():
-    st.session_state["frames"] = []  # Reset frames
-    st.session_state["recording"] = True
-    st.write("Recording started...")
-    # Start the sounddevice stream
-    st.session_state["stream"] = sd.InputStream(callback=audio_callback, channels=1, samplerate=16000)
-    st.session_state["stream"].start()
-
-# Stop recording
-def stop_recording():
-    st.session_state["recording"] = False
-    st.session_state["stream"].stop()
-    st.session_state["stream"].close()
-    st.write("Recording stopped.")
-
-    # Process and transcribe audio
-    if st.session_state["frames"]:
-        # Combine frames and convert to numpy array
-        audio_data = np.concatenate(st.session_state["frames"], axis=0).flatten()
-        
-        # Save audio as WAV file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
-            write(temp_wav.name, 16000, audio_data.astype(np.int16))
-        
-            # Transcribe the audio using Whisper
-            transcription = whisper_model.transcribe(temp_wav.name)
-            query = transcription['text']
-            st.write(f"Transcribed Text: {query}")
-        
-        os.remove(temp_wav.name)  # Clean up temporary file
-        return query
-    else:
-        st.write("No audio captured.")
-        return None
-
-# Start and stop buttons for recording
-if st.button("Start Recording"):
-    if not st.session_state["recording"]:
-        start_recording()
-
-if st.button("Stop Recording"):
-    if st.session_state["recording"]:
-        query = stop_recording()
-        if query:
-            with st.spinner("Searching for an answer..."):
-                custom_query_engine = st.session_state['custom_query_engine']
-                result = custom_query_engine.query(query)
-                response = result.response
-                st.write("Response:")
-                st.write(response)
-
-                # Optional: Play response with TTS
-                tts = gTTS(response, lang="en")
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as audio_file:
-                    tts.save(audio_file.name)
-                    st.audio(audio_file.name)
-                os.remove(audio_file.name)  # Remove temporary audio file
+        # Optional: Play response with TTS
+        tts = gTTS(response, lang="en")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as audio_file:
+            tts.save(audio_file.name)
+            st.audio(audio_file.name)
+        os.remove(audio_file.name)  # Remove temporary audio file
